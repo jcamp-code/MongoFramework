@@ -1,11 +1,12 @@
 <div align="center">
 
-![Icon](images/icon.png)
+![Icon](https://raw.githubusercontent.com/jcamp-code/MongoFramework/main/images/icon.png)
 # MongoFramework
 
 ![Build](https://img.shields.io/github/actions/workflow/status/jcamp-code/MongoFramework/build.yml?branch=main)
 [![Codecov](https://img.shields.io/codecov/c/github/jcamp-code/MongoFramework/main.svg)](https://codecov.io/gh/jcamp-code/MongoFramework)
 [![NuGet](https://img.shields.io/nuget/v/jcamp.MongoFramework.svg)](https://www.nuget.org/packages/jcamp.MongoFramework/)
+
 </div>
 
 ## Fork
