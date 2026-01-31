@@ -6,7 +6,7 @@
 		<Title>MongoFramework</Title>
 		<Description>An "Entity Framework"-like interface for the MongoDB C# Driver</Description>
 		<PackageTags>$(PackageBaseTags)</PackageTags>
-		<Authors>James Turner</Authors>
+		<Authors>James Turner, John Campion</Authors>
 	</PropertyGroup>
 
 	<ItemGroup>

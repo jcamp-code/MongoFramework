@@ -2,31 +2,37 @@
   <PropertyGroup>
     <Version>3.0.0</Version>
     <RootNamespace>MongoFramework</RootNamespace>
-
     <Company>Turner Software/JohnCampion</Company>
 
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <!-- NuGet Package Settings -->
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/jcamp-code/MongoFramework</PackageProjectUrl>
     <PackageBaseTags>mongo;mongodb;data;database;orm</PackageBaseTags>
+
+    <!-- Repository metadata -->
+    <RepositoryUrl>https://github.com/jcamp-code/MongoFramework.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
 
     <!-- SourceLink Support -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
 
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
     <LangVersion>Latest</LangVersion>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference
-      Include="Microsoft.SourceLink.GitHub"
-      Version="10.0.102"
-      PrivateAssets="All"
-    />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\images\$(PackageIcon)" Pack="true" PackagePath="/" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

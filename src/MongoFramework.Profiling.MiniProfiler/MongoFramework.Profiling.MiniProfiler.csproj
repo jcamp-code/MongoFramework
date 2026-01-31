@@ -6,7 +6,7 @@
 		<Title>MiniProfiler for MongoFramework</Title>
 		<Description>MongoFramework integration for MiniProfiler</Description>
 		<PackageTags>miniprofiler;profiler;profiling;timing;performance;$(PackageBaseTags)</PackageTags>
-		<Authors>James Turner</Authors>
+		<Authors>James Turner, John Campion</Authors>
 	</PropertyGroup>
 
 	<ItemGroup>
