@@ -32,6 +32,30 @@ namespace MongoFramework.Linq
 			return await source.AsAsyncEnumerable(cancellationToken).ToListAsync(cancellationToken);
 		}
 
+		public static async Task<Dictionary<TKey, TSource>> ToDictionaryAsync<TSource, TKey>(this IQueryable<TSource> source, Func<TSource, TKey> keySelector, CancellationToken cancellationToken = default)
+			where TKey : notnull
+		{
+			return await source.AsAsyncEnumerable(cancellationToken).ToDictionaryAsync(keySelector, comparer: null, cancellationToken);
+		}
+
+		public static async Task<Dictionary<TKey, TSource>> ToDictionaryAsync<TSource, TKey>(this IQueryable<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey> comparer, CancellationToken cancellationToken = default)
+			where TKey : notnull
+		{
+			return await source.AsAsyncEnumerable(cancellationToken).ToDictionaryAsync(keySelector, comparer, cancellationToken);
+		}
+
+		public static async Task<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(this IQueryable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, CancellationToken cancellationToken = default)
+			where TKey : notnull
+		{
+			return await source.AsAsyncEnumerable(cancellationToken).ToDictionaryAsync(keySelector, elementSelector, comparer: null, cancellationToken);
+		}
+
+		public static async Task<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(this IQueryable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector, IEqualityComparer<TKey> comparer, CancellationToken cancellationToken = default)
+			where TKey : notnull
+		{
+			return await source.AsAsyncEnumerable(cancellationToken).ToDictionaryAsync(keySelector, elementSelector, comparer, cancellationToken);
+		}
+
 		private static async Task<TResult> ExecuteExpressionAsync<TResult, TSource>(IQueryable<TSource> source, Expression expression, CancellationToken cancellationToken)
 		{
 			if (source.Provider is IMongoFrameworkQueryProvider provider)

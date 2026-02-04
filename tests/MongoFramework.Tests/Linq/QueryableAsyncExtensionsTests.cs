@@ -18,6 +18,7 @@ namespace MongoFramework.Tests.Linq
 			public string Title { get; set; }
 			public DateTime Date { get; set; }
 			public int IntNumber { get; set; }
+			public int? NullableIntNumber { get; set; }
 		}
 
 		[TestMethod]
@@ -472,6 +473,98 @@ namespace MongoFramework.Tests.Linq
 		}
 
 		[TestMethod]
+		public async Task MaxAsync_NoValues_NullableSelector_ReturnsNull()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			// With nullable selector, empty collection should return null (EF Core behavior)
+			var result = await queryable.MaxAsync(e => (int?)e.IntNumber);
+			Assert.IsNull(result);
+		}
+
+		[TestMethod]
+		public async Task MaxAsync_HasValues_NullableSelector()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var context = new MongoDbContext(connection);
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "MaxAsync_HasValues_NullableSelector.1", IntNumber = 5 }, EntityEntryState.Added);
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "MaxAsync_HasValues_NullableSelector.2", IntNumber = 10 }, EntityEntryState.Added);
+			context.SaveChanges();
+
+			var result = await queryable.MaxAsync(e => (int?)e.IntNumber);
+			Assert.AreEqual(10, result);
+		}
+
+		[TestMethod]
+		public async Task MaxAsync_NoValues_NullableProperty_ReturnsNull()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			// With nullable property, empty collection should return null
+			var result = await queryable.MaxAsync(e => e.NullableIntNumber);
+			Assert.IsNull(result);
+		}
+
+		[TestMethod]
+		public async Task MinAsync_NoValues_NullableSelector_ReturnsNull()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			// With nullable selector, empty collection should return null (EF Core behavior)
+			var result = await queryable.MinAsync(e => (int?)e.IntNumber);
+			Assert.IsNull(result);
+		}
+
+		[TestMethod]
+		public async Task MinAsync_HasValues_NullableSelector()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var context = new MongoDbContext(connection);
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "MinAsync_HasValues_NullableSelector.1", IntNumber = 15 }, EntityEntryState.Added);
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "MinAsync_HasValues_NullableSelector.2", IntNumber = 5 }, EntityEntryState.Added);
+			context.SaveChanges();
+
+			var result = await queryable.MinAsync(e => (int?)e.IntNumber);
+			Assert.AreEqual(5, result);
+		}
+
+		[TestMethod]
+		public async Task MinAsync_NoValues_NullableProperty_ReturnsNull()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			// With nullable property, empty collection should return null
+			var result = await queryable.MinAsync(e => e.NullableIntNumber);
+			Assert.IsNull(result);
+		}
+
+		[TestMethod]
 		public async Task AnyAsync_NoValues()
 		{
 			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
@@ -519,6 +612,99 @@ namespace MongoFramework.Tests.Linq
 
 			var resultTwo = await queryable.AnyAsync(e => e.Title == "AnyAsync_WithPredicate.3");
 			Assert.IsFalse(resultTwo);
+		}
+
+		[TestMethod]
+		public async Task ToDictionaryAsync_WithKeySelector()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var context = new MongoDbContext(connection);
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithKeySelector.1" }, EntityEntryState.Added);
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithKeySelector.2" }, EntityEntryState.Added);
+			context.SaveChanges();
+
+			var result = await queryable.ToDictionaryAsync(e => e.Id);
+			Assert.HasCount(2, result);
+			Assert.IsTrue(result.Values.Any(v => v.Title == "ToDictionaryAsync_WithKeySelector.1"));
+			Assert.IsTrue(result.Values.Any(v => v.Title == "ToDictionaryAsync_WithKeySelector.2"));
+		}
+
+		[TestMethod]
+		public async Task ToDictionaryAsync_WithKeySelector_AndComparer()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var context = new MongoDbContext(connection);
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithKeySelector_AndComparer.1" }, EntityEntryState.Added);
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithKeySelector_AndComparer.2" }, EntityEntryState.Added);
+			context.SaveChanges();
+
+			var result = await queryable.ToDictionaryAsync(e => e.Title, StringComparer.OrdinalIgnoreCase);
+			Assert.HasCount(2, result);
+			Assert.IsTrue(result.ContainsKey("TODICTIONARYASYNC_WITHKEYSELECTOR_ANDCOMPARER.1"));
+			Assert.IsTrue(result.ContainsKey("todictionaryasync_withkeyselector_andcomparer.2"));
+		}
+
+		[TestMethod]
+		public async Task ToDictionaryAsync_WithKeySelector_AndElementSelector()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var context = new MongoDbContext(connection);
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithKeySelector_AndElementSelector.1" }, EntityEntryState.Added);
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithKeySelector_AndElementSelector.2" }, EntityEntryState.Added);
+			context.SaveChanges();
+
+			var result = await queryable.ToDictionaryAsync(e => e.Id, e => e.Title);
+			Assert.HasCount(2, result);
+			Assert.IsTrue(result.Values.Contains("ToDictionaryAsync_WithKeySelector_AndElementSelector.1"));
+			Assert.IsTrue(result.Values.Contains("ToDictionaryAsync_WithKeySelector_AndElementSelector.2"));
+		}
+
+		[TestMethod]
+		public async Task ToDictionaryAsync_WithKeySelector_AndElementSelector_AndComparer()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var context = new MongoDbContext(connection);
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithAllParams.1" }, EntityEntryState.Added);
+			context.ChangeTracker.SetEntityState(new QueryableAsyncModel { Title = "ToDictionaryAsync_WithAllParams.2" }, EntityEntryState.Added);
+			context.SaveChanges();
+
+			var result = await queryable.ToDictionaryAsync(e => e.Title, e => e.IntNumber, StringComparer.OrdinalIgnoreCase);
+			Assert.HasCount(2, result);
+			Assert.IsTrue(result.ContainsKey("TODICTIONARYASYNC_WITHALLPARAMS.1"));
+			Assert.IsTrue(result.ContainsKey("todictionaryasync_withallparams.2"));
+		}
+
+		[TestMethod]
+		public async Task ToDictionaryAsync_EmptyCollection()
+		{
+			EntityMapping.RegisterType(typeof(QueryableAsyncModel));
+
+			var connection = TestConfiguration.GetConnection();
+			var provider = new MongoFrameworkQueryProvider<QueryableAsyncModel>(connection);
+			var queryable = new MongoFrameworkQueryable<QueryableAsyncModel>(provider);
+
+			var result = await queryable.ToDictionaryAsync(e => e.Id);
+			Assert.HasCount(0, result);
 		}
 	}
 }

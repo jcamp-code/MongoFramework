@@ -128,8 +128,20 @@ namespace MongoFramework.Infrastructure.Linq
 						var innerEx = ex.InnerException;
 						// If the inner exception is a business logic exception, throw it
 						// If it's an expression translation exception, fall back to aggregation
-						if (innerEx is InvalidOperationException ||
-							innerEx is ArgumentException ||
+						if (innerEx is InvalidOperationException invalidOpEx)
+						{
+							// For Max/Min with nullable return types, return null for empty sequences
+							// instead of throwing, matching EF Core behavior
+							if (invalidOpEx.Message.Contains("Sequence contains no elements") &&
+								expression is MethodCallExpression methodCall &&
+								(methodCall.Method.Name == "Max" || methodCall.Method.Name == "Min") &&
+								IsNullableType(resultType))
+							{
+								return null;
+							}
+							throw innerEx;
+						}
+						if (innerEx is ArgumentException ||
 							innerEx is ArgumentNullException)
 						{
 							throw innerEx;
@@ -269,8 +281,20 @@ namespace MongoFramework.Infrastructure.Linq
 						var innerEx = ex.InnerException;
 						// If the inner exception is a business logic exception, throw it
 						// If it's an expression translation exception, fall back to aggregation
-						if (innerEx is InvalidOperationException ||
-							innerEx is ArgumentException ||
+						if (innerEx is InvalidOperationException invalidOpEx)
+						{
+							// For Max/Min with nullable return types, return null for empty sequences
+							// instead of throwing, matching EF Core behavior
+							if (invalidOpEx.Message.Contains("Sequence contains no elements") &&
+								expression is MethodCallExpression methodCall &&
+								(methodCall.Method.Name == "Max" || methodCall.Method.Name == "Min") &&
+								IsNullableType(resultType))
+							{
+								return CreateValueTask(null, resultType);
+							}
+							throw innerEx;
+						}
+						if (innerEx is ArgumentException ||
 							innerEx is ArgumentNullException)
 						{
 							throw innerEx;
@@ -570,6 +594,14 @@ namespace MongoFramework.Infrastructure.Linq
 		private static ValueTask<T> CreateValueTaskGeneric<T>(object result)
 		{
 			return new ValueTask<T>((T)result);
+		}
+
+		/// <summary>
+		/// Determines if a type is nullable (either Nullable&lt;T&gt; or a reference type).
+		/// </summary>
+		private static bool IsNullableType(Type type)
+		{
+			return Nullable.GetUnderlyingType(type) != null || !type.IsValueType;
 		}
 
 		/// <summary>
