@@ -160,9 +160,18 @@ namespace MongoFramework.Infrastructure.Serialization
 			}
 		}
 
+		private static bool IsCollectionType(Type type)
+		{
+			return type != null
+				&& type != typeof(string)
+				&& !typeof(BsonValue).IsAssignableFrom(type)
+				&& typeof(System.Collections.IEnumerable).IsAssignableFrom(type)
+				&& !(type.IsGenericType && DictionaryTypes.Contains(type.GetGenericTypeDefinition()));
+		}
+
 		private IBsonSerializer GetRealSerializer(Type type)
 		{
-			if (type == typeof(object))
+			if (type == null || type == typeof(object))
 			{
 				return new DictionaryInterfaceImplementerSerializer<Dictionary<string, object>>();
 			}
@@ -172,6 +181,14 @@ namespace MongoFramework.Infrastructure.Serialization
 				var serializerType = typeof(DictionaryInterfaceImplementerSerializer<>).MakeGenericType(type);
 				var serializer = (IBsonSerializer)Activator.CreateInstance(serializerType);
 				return serializer;
+			}
+
+			// Collection types (List<T>, T[], HashSet<T>, etc.) are handled inline by the
+			// Serialize method to avoid EntityMapping.TryRegisterType corrupting global state.
+			// We return null here as a signal; the Serialize method checks IsCollectionType first.
+			if (IsCollectionType(type))
+			{
+				return null;
 			}
 
 			if (EntityMapping.IsValidTypeToMap(type))
@@ -194,6 +211,21 @@ namespace MongoFramework.Infrastructure.Serialization
 
 		public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, TEntity value)
 		{
+			// Handle collection types directly by writing as BsonArray.
+			// This avoids EntityMapping.TryRegisterType being called for types like List<string>,
+			// which would create a broken BsonClassMap and corrupt the global serializer state.
+			if (value is System.Collections.IEnumerable enumerable && IsCollectionType(value.GetType()))
+			{
+				var writer = context.Writer;
+				writer.WriteStartArray();
+				foreach (var item in enumerable)
+				{
+					BsonSerializer.Serialize(writer, typeof(object), item);
+				}
+				writer.WriteEndArray();
+				return;
+			}
+
 			var serializer = GetRealSerializer(value?.GetType() ?? ValueType);
 			serializer.Serialize(context, args, value);
 		}

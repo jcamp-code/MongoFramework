@@ -316,5 +316,36 @@ namespace MongoFramework.Tests.Infrastructure.Serialization
 			Assert.AreEqual(20, ((object[])result.Dictionary["Array"])[1]);
 			Assert.AreEqual(ObjectId.Parse("507f1f77bcf86cd799439011"), result.Dictionary["ObjectId"]);
 		}
+
+		[TestMethod]
+		public void SerializeCollectionViaTypeDiscoveryDoesNotCallEntityMapping()
+		{
+			// Regression: When TypeDiscoverySerializer<object> encounters collection types
+			// like List<string>, string[], or HashSet<int>, it must NOT call
+			// EntityMapping.TryRegisterType for them. Doing so creates a broken BsonClassMap
+			// (e.g. mapping only List<T>.Capacity) which corrupts the global serializer state
+			// and breaks LINQ query translation for all subsequent entity queries.
+			//
+			// The fix delegates to BsonSerializer.LookupSerializer for IEnumerable types,
+			// which uses the driver's built-in collection serializers.
+			var serializer = new TypeDiscoverySerializer<object>();
+
+			// Verify List<string> is NOT registered via EntityMapping
+			Assert.IsFalse(EntityMapping.IsRegistered(typeof(List<string>)));
+
+			var document = new BsonDocument();
+			using (var writer = new BsonDocumentWriter(document))
+			{
+				writer.WriteStartDocument();
+				writer.WriteName("tags");
+				var context = BsonSerializationContext.CreateRoot(writer);
+				serializer.Serialize(context, new List<string> { "alpha", "beta" });
+				writer.WriteEndDocument();
+			}
+
+			// After serialization, List<string> must NOT have been registered via EntityMapping
+			Assert.IsFalse(EntityMapping.IsRegistered(typeof(List<string>)));
+			Assert.IsFalse(EntityMapping.IsRegistered(typeof(string[])));
+		}
 	}
 }
