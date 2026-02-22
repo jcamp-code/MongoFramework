@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <Version>3.0.3</Version>
+    <Version>3.0.4</Version>
     <RootNamespace>MongoFramework</RootNamespace>
     <Company>Turner Software/JohnCampion</Company>
 

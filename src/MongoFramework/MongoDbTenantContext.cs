@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using MongoFramework.Infrastructure.Commands;
 using MongoFramework.Utilities;
 
@@ -42,6 +43,17 @@ namespace MongoFramework
 			{
 				CheckEntity(entity);
 			}
+		}
+
+		protected override IMongoDbSet<TEntity> CreateDynamicSet<TEntity>()
+		{
+			if (typeof(IHaveTenantId).IsAssignableFrom(typeof(TEntity)))
+			{
+				var tenantSetType = typeof(MongoDbTenantSet<>).MakeGenericType(typeof(TEntity));
+				return (IMongoDbSet<TEntity>)Activator.CreateInstance(tenantSetType, this);
+			}
+
+			return base.CreateDynamicSet<TEntity>();
 		}
 
 		/// <summary>

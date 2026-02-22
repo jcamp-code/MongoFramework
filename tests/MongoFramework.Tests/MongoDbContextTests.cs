@@ -24,6 +24,16 @@ namespace MongoFramework.Tests
 			public DateTime Date { get; set; }
 		}
 
+		class UndeclaredModel
+		{
+			public string Id { get; set; }
+		}
+		class TenantEntityModel : IHaveTenantId
+		{
+			public string Id { get; set; }
+			public string TenantId { get; set; }
+		}
+
 		class MongoDbContextTestContext : MongoDbContext
 		{
 			public MongoDbContextTestContext(IMongoDbConnection connection) : base(connection) { }
@@ -168,6 +178,26 @@ namespace MongoFramework.Tests
 
 			Assert.AreEqual(MongoFramework.Infrastructure.EntityEntryState.NoChanges, context.ChangeTracker.GetEntry(result[0]).State);
 			Assert.AreEqual(MongoFramework.Infrastructure.EntityEntryState.NoChanges, context.ChangeTracker.GetEntry(result[1]).State);
+		}
+
+		[TestMethod]
+		public void DynamicSetIsCached()
+		{
+			using (var context = new MongoDbContextTestContext(TestConfiguration.GetConnection()))
+			{
+				var set1 = context.Set<UndeclaredModel>();
+				var set2 = context.Set<UndeclaredModel>();
+				Assert.AreSame(set1, set2);
+			}
+		}
+
+		[TestMethod]
+		public void DynamicSetThrowsForTenantEntity()
+		{
+			using (var context = new MongoDbContextTestContext(TestConfiguration.GetConnection()))
+			{
+				Assert.Throws<InvalidOperationException>(() => context.Set<TenantEntityModel>());
+			}
 		}
 
 	}

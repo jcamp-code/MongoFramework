@@ -19,6 +19,7 @@ namespace MongoFramework
 	public class MongoDbContext : IMongoDbContext, IDisposable
 	{
 		private static readonly ConcurrentDictionary<Type, ContextMappingLock> ContextMappingLocks = new();
+		private readonly ConcurrentDictionary<Type, object> _dynamicSetCache = new();
 		private class ContextMappingLock
 		{
 			public bool HasCompleted { get; set; }
@@ -156,6 +157,23 @@ namespace MongoFramework
 			if (existing != null)
 			{
 				return existing.GetValue(this) as IMongoDbSet<TEntity>;
+			}
+
+			return (IMongoDbSet<TEntity>)_dynamicSetCache.GetOrAdd(
+				typeof(TEntity), _ => CreateDynamicSet<TEntity>());
+		}
+
+		/// <summary>
+		/// Creates a new <see cref="IMongoDbSet{TEntity}"/> for an entity type that is not declared
+		/// as a property on the context. Override in derived contexts to customize set creation.
+		/// </summary>
+		protected virtual IMongoDbSet<TEntity> CreateDynamicSet<TEntity>() where TEntity : class
+		{
+			if (typeof(IHaveTenantId).IsAssignableFrom(typeof(TEntity)))
+			{
+				throw new InvalidOperationException(
+					$"Entity type {typeof(TEntity).Name} implements IHaveTenantId and requires a tenant context. " +
+					$"Use MongoDbTenantContext to access this entity type.");
 			}
 
 			return new MongoDbSet<TEntity>(this);
